@@ -362,48 +362,39 @@
   // We build a row as (L, M, R) with a consistent rule type for that row.
   // Then we mix two different row-rules to create variety.
   const ROW_RULES = [
-    {
-      name: "回転(90°) + XOR",
-      buildRow: (L) => {
-        const M = rot90(L);
-        const R = xor(L, M);
-        return {L,M,R};
-      }
-    },
-    {
-      name: "左右反転 + XOR",
-      buildRow: (L) => {
-        const M = flipH(L);
-        const R = xor(L, M);
-        return {L,M,R};
-      }
-    },
-    {
-      name: "下シフト + XOR",
-      buildRow: (L) => {
-        const M = shiftDown(L);
-        const R = xor(L, M);
-        return {L,M,R};
-      }
-    },
-    {
-      name: "右シフト + OR",
-      buildRow: (L) => {
-        const M = shiftRight(L);
-        const R = or(L, M);
-        return {L,M,R};
-      }
-    },
-    {
-      name: "回転(180°) + AND",
-      buildRow: (L) => {
-        const M = rot180(L);
-        const R = and(L, M);
-        return {L,M,R};
-      }
-    },
-  ];
-
+  {
+    name: "回転(90°) + XOR",
+    buildRow: (L) => {
+      const M = rot90(L);
+      const R = xor(L, M);
+      return {L,M,R};
+    }
+  },
+  {
+    name: "右シフト + XOR",
+    buildRow: (L) => {
+      const M = shiftRight(L);
+      const R = xor(L, M);
+      return {L,M,R};
+    }
+  },
+  {
+    name: "下シフト + XOR",
+    buildRow: (L) => {
+      const M = shiftDown(L);
+      const R = xor(L, M);
+      return {L,M,R};
+    }
+  },
+  {
+    name: "左右反転 + XOR",
+    buildRow: (L) => {
+      const M = flipH(L);
+      const R = xor(L, M);
+      return {L,M,R};
+    }
+  },
+];
   // ========= SVG render =========
   function cellToSVG(c, size=96){
     const s = size/3;
