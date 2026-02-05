@@ -461,76 +461,48 @@
   }
 
   // ========= Generate a full 3×3 matrix question =========
-  function generateQuestion(){
-    // pick two row rules, then create row1/row2 with those rules, row3 uses one of them
-    const ruleA = ROW_RULES[rndInt(0, ROW_RULES.length-1)];
-    let ruleB = ROW_RULES[rndInt(0, ROW_RULES.length-1)];
-    // ensure different often
-    if (ruleB.name === ruleA.name) ruleB = ROW_RULES[(ROW_RULES.indexOf(ruleA)+1)%ROW_RULES.length];
+function generateQuestion(){
+  const rule = ROW_RULES[rndInt(0, ROW_RULES.length-1)];
 
-    // Create rows with sanity checks
-    function makeRow(rule){
-      let L, row;
-      let guard = 0;
-      while (guard++ < 50){
-        L = randCell();
-        row = rule.buildRow(L);
-        // avoid trivial R
-        const onesR = countOnes(row.R);
-        if (onesR >= 1 && onesR <= 8) break;
-      }
-      return row;
+  function makeRow(){
+    let L, row, guard = 0;
+    while (guard++ < 80){
+      L = randCell();
+      row = rule.buildRow(L);
+      const onesR = countOnes(row.R);
+      // 黒が多すぎ/少なすぎを避ける
+      if (onesR >= 2 && onesR <= 7) break;
     }
+    return row;
+  }
 
-    const r1 = makeRow(ruleA);
-    const r2 = makeRow(ruleB);
+  const r1 = makeRow();
+  const r2 = makeRow();
 
-    // For row3, randomly choose ruleA or ruleB (so it's not always same)
-    const rule3 = Math.random() < 0.5 ? ruleA : ruleB;
-    let L3 = randCell();
-    let row3 = rule3.buildRow(L3);
+  // 3行目はRを隠す
+  let L3 = randCell();
+  let r3 = rule.buildRow(L3);
 
-    // Avoid duplicates: ensure row3 cells aren't identical to earlier ones too often
-    const used = new Set([
-      cellKey(r1.L), cellKey(r1.M), cellKey(r1.R),
-      cellKey(r2.L), cellKey(r2.M), cellKey(r2.R),
-    ]);
-    let guard = 0;
-    while (guard++ < 60){
-      const keys = [cellKey(row3.L), cellKey(row3.M), cellKey(row3.R)];
-      const tooManyDup = keys.some(k => used.has(k));
-      if (!tooManyDup) break;
-      L3 = randCell();
-      row3 = rule3.buildRow(L3);
-    }
+  const answer = r3.R;
+  const { options, ansIndex } = buildOptions(answer, rule.name);
 
-    const answer = row3.R;
-
-    // Options
-    const { options, ansIndex } = buildOptions(answer, rule3.name);
-
-    // Debug text
-    const debugText =
-`Row1: ${ruleA.name}
-Row2: ${ruleB.name}
-Row3: ${rule3.name}
-
-※ 右下（?）が正解セルです。
-※ 1セルは 3×3 の白黒マス（SVG描画）。
+  const debugText =
+`Rule(ALL rows): ${rule.name}
+※ 全行同一ルールで生成（メンサ風に見えやすい）
 `;
 
-    return {
-      grid: [
-        [r1.L, r1.M, r1.R],
-        [r2.L, r2.M, r2.R],
-        [row3.L, row3.M, null]
-      ],
-      answer,
-      options,
-      ansIndex,
-      debugText
-    };
-  }
+  return {
+    grid: [
+      [r1.L, r1.M, r1.R],
+      [r2.L, r2.M, r2.R],
+      [r3.L, r3.M, null]
+    ],
+    answer,
+    options,
+    ansIndex,
+    debugText
+  };
+}
 
   // ========= UI =========
   const $matrix = document.getElementById("matrix");
