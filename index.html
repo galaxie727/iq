@@ -1,1 +1,690 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ガチIQ（MVP）- 3×3マトリクス自動生成</title>
+<style>
+  :root{
+    --bg:#0b0b0b;
+    --panel:#111;
+    --panel2:#151515;
+    --text:#f2f2f2;
+    --muted:#b9b9b9;
+    --line:#2a2a2a;
+    --ok:#19c37d;
+    --ng:#ff4d4f;
+    --btn:#1a1a1a;
+    --btn2:#222;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background: radial-gradient(1200px 600px at 20% 0%, #141414 0%, #0b0b0b 55%, #070707 100%);
+    color:var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap{
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 18px 14px 26px;
+  }
+  .topbar{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom: 12px;
+  }
+  h1{
+    margin:0;
+    font-size: 18px;
+    letter-spacing: .08em;
+    font-weight: 800;
+  }
+  .sub{
+    margin-top:6px;
+    color:var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .pill{
+    padding:8px 10px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space:nowrap;
+    height: fit-content;
+  }
 
+  .card{
+    border:1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+
+  .matrix{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .cell{
+    border:1px solid var(--line);
+    background: #fff;
+    border-radius: 10px;
+    overflow:hidden;
+    aspect-ratio: 1 / 1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .cell.q{
+    background: #fff;
+    position:relative;
+  }
+  .qmark{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    font-size: 34px;
+    color:#111;
+    letter-spacing:.05em;
+  }
+
+  .row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    margin-top: 12px;
+  }
+
+  .btn{
+    border:1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 12px;
+    cursor:pointer;
+    font-weight: 700;
+    letter-spacing:.04em;
+  }
+  .btn:hover{ background: rgba(255,255,255,.08); }
+  .btn:active{ transform: translateY(1px); }
+  .btn.secondary{
+    background: rgba(255,255,255,.02);
+    color: var(--muted);
+  }
+
+  .opts{
+    margin-top: 14px;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  @media (max-width:520px){
+    .opts{ grid-template-columns: repeat(2, 1fr); }
+  }
+  .opt{
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.03);
+    border-radius: 14px;
+    padding: 10px;
+    cursor:pointer;
+    transition: transform .06s ease;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:flex-start;
+    min-height: 86px;
+  }
+  .opt:hover{ background: rgba(255,255,255,.06); }
+  .opt:active{ transform: translateY(1px); }
+  .badge{
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1px solid var(--line);
+    background: rgba(0,0,0,.25);
+    font-weight: 900;
+    color: var(--muted);
+    flex: 0 0 auto;
+  }
+  .thumb{
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    background:#fff;
+    flex: 0 0 auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .meta{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width: 0;
+  }
+  .meta .title{
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing:.02em;
+    color: var(--text);
+  }
+  .meta .desc{
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+
+  .msg{
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.02);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.45;
+    min-height: 42px;
+  }
+  .msg.ok{
+    border-color: rgba(25,195,125,.35);
+    background: rgba(25,195,125,.10);
+    color: #d7fff0;
+  }
+  .msg.ng{
+    border-color: rgba(255,77,79,.35);
+    background: rgba(255,77,79,.10);
+    color: #ffe1e1;
+  }
+
+  details{
+    margin-top: 12px;
+    border:1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.02);
+  }
+  details > summary{
+    cursor:pointer;
+    font-weight: 800;
+    color: var(--muted);
+  }
+  .small{
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 8px;
+    white-space: pre-wrap;
+  }
+  code{ color:#e6e6e6; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>ガチIQ（MVP）</h1>
+        <div class="sub">3×3マトリクス推理を自動生成。まずは「図形＝3×3白黒セル」だけで無限量産できます。</div>
+      </div>
+      <div class="pill" id="statusPill">出題準備中…</div>
+    </div>
+
+    <div class="card">
+      <div class="matrix" id="matrix"></div>
+
+      <div class="row">
+        <button class="btn" id="newBtn">次の問題</button>
+        <button class="btn secondary" id="showBtn">正解を表示</button>
+      </div>
+
+      <div class="opts" id="opts"></div>
+
+      <div class="msg" id="msg">「次の問題」を押してスタート。</div>
+
+      <details>
+        <summary>（開発用）今回の生成ルールを見る</summary>
+        <div class="small" id="debug"></div>
+      </details>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // ========= Utilities =========
+  const deepEq = (a,b) => a.length===b.length && a.every((v,i)=>v===b[i]);
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const rndInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  };
+  const countOnes = (c) => c.reduce((s,v)=>s+(v?1:0),0);
+  const cellKey = (c) => c.join("");
+
+  // ========= Cell ops (3×3 as flat 9 bits) =========
+  function rot90(c){
+    return [
+      c[6],c[3],c[0],
+      c[7],c[4],c[1],
+      c[8],c[5],c[2],
+    ];
+  }
+  function rot180(c){ return rot90(rot90(c)); }
+  function rot270(c){ return rot90(rot180(c)); }
+
+  // shift right within each row (circular)
+  function shiftRight(c){
+    return [
+      c[2],c[0],c[1],
+      c[5],c[3],c[4],
+      c[8],c[6],c[7],
+    ];
+  }
+  // shift down within each col (circular)
+  function shiftDown(c){
+    return [
+      c[6],c[7],c[8],
+      c[0],c[1],c[2],
+      c[3],c[4],c[5],
+    ];
+  }
+
+  function xor(a,b){ return a.map((v,i)=> (v ^ b[i]) ); }
+  function or(a,b){ return a.map((v,i)=> (v | b[i]) ); }
+  function and(a,b){ return a.map((v,i)=> (v & b[i]) ); }
+
+  // flip horizontally (mirror)
+  function flipH(c){
+    return [
+      c[2],c[1],c[0],
+      c[5],c[4],c[3],
+      c[8],c[7],c[6],
+    ];
+  }
+  // flip vertically
+  function flipV(c){
+    return [
+      c[6],c[7],c[8],
+      c[3],c[4],c[5],
+      c[0],c[1],c[2],
+    ];
+  }
+
+  // slightly perturb: swap two random positions
+  function swap2(c){
+    const a = c.slice();
+    const i = rndInt(0,8);
+    let j = rndInt(0,8);
+    if (j===i) j = (j+1)%9;
+    [a[i],a[j]] = [a[j],a[i]];
+    return a;
+  }
+  // toggle k bits
+  function toggleK(c, k=1){
+    const a = c.slice();
+    const idx = shuffle([...Array(9)].map((_,i)=>i)).slice(0, k);
+    idx.forEach(i => a[i] = a[i] ? 0 : 1);
+    return a;
+  }
+
+  // ========= Random base cell generation =========
+  function randCell(){
+    // Keep density sane: 2..4 blacks, avoid too symmetric empties/full
+    const k = rndInt(2,4);
+    const positions = shuffle([...Array(9)].map((_,i)=>i)).slice(0,k);
+    const c = Array(9).fill(0);
+    positions.forEach(i => c[i]=1);
+    return c;
+  }
+
+  // ========= Rule templates (Raven-ish row rules) =========
+  // We build a row as (L, M, R) with a consistent rule type for that row.
+  // Then we mix two different row-rules to create variety.
+  const ROW_RULES = [
+    {
+      name: "回転(90°) + XOR",
+      buildRow: (L) => {
+        const M = rot90(L);
+        const R = xor(L, M);
+        return {L,M,R};
+      }
+    },
+    {
+      name: "左右反転 + XOR",
+      buildRow: (L) => {
+        const M = flipH(L);
+        const R = xor(L, M);
+        return {L,M,R};
+      }
+    },
+    {
+      name: "下シフト + XOR",
+      buildRow: (L) => {
+        const M = shiftDown(L);
+        const R = xor(L, M);
+        return {L,M,R};
+      }
+    },
+    {
+      name: "右シフト + OR",
+      buildRow: (L) => {
+        const M = shiftRight(L);
+        const R = or(L, M);
+        return {L,M,R};
+      }
+    },
+    {
+      name: "回転(180°) + AND",
+      buildRow: (L) => {
+        const M = rot180(L);
+        const R = and(L, M);
+        return {L,M,R};
+      }
+    },
+  ];
+
+  // ========= SVG render =========
+  function cellToSVG(c, size=96){
+    const s = size/3;
+    let rects = "";
+    for(let i=0;i<9;i++){
+      if(c[i]){
+        const x = (i%3)*s, y = Math.floor(i/3)*s;
+        rects += `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="#000"/>`;
+      }
+    }
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true">
+      <rect width="${size}" height="${size}" fill="#fff" stroke="#000" stroke-width="2"/>
+      ${rects}
+    </svg>`;
+  }
+
+  // ========= Build options (6 choices) =========
+  function buildOptions(answer, ruleHint){
+    // Start with transformations of answer + small perturbations to look plausible
+    const candidates = [];
+    const add = (c) => {
+      const k = cellKey(c);
+      if (!candidates.some(x => cellKey(x)===k)) candidates.push(c);
+    };
+
+    add(answer);
+    add(rot90(answer));
+    add(rot180(answer));
+    add(flipH(answer));
+    add(flipV(answer));
+    add(shiftRight(answer));
+    add(shiftDown(answer));
+    add(xor(answer, rot90(answer)));
+    add(toggleK(answer,1));
+    add(toggleK(answer,2));
+    add(swap2(answer));
+
+    // Make sure we end up with 6 unique, and not too weird (avoid empty/full)
+    const filtered = candidates.filter(c => {
+      const ones = countOnes(c);
+      return ones >= 1 && ones <= 8; // keep plausible
+    });
+
+    // Always include the exact answer, plus 5 distractors
+    const distractPool = filtered.filter(c => !deepEq(c, answer));
+    const distractors = shuffle(distractPool).slice(0, 5);
+
+    // If not enough, keep generating a bit
+    let tries = 0;
+    while (distractors.length < 5 && tries < 60){
+      tries++;
+      const variant = toggleK(answer, rndInt(1,2));
+      if (!deepEq(variant, answer) && !distractors.some(d => deepEq(d, variant))){
+        const ones = countOnes(variant);
+        if (ones >= 1 && ones <= 8) distractors.push(variant);
+      }
+    }
+
+    const options = shuffle([answer, ...distractors]).slice(0,6);
+
+    // Find answer index
+    const ansIndex = options.findIndex(o => deepEq(o, answer));
+    return { options, ansIndex };
+  }
+
+  // ========= Generate a full 3×3 matrix question =========
+  function generateQuestion(){
+    // pick two row rules, then create row1/row2 with those rules, row3 uses one of them
+    const ruleA = ROW_RULES[rndInt(0, ROW_RULES.length-1)];
+    let ruleB = ROW_RULES[rndInt(0, ROW_RULES.length-1)];
+    // ensure different often
+    if (ruleB.name === ruleA.name) ruleB = ROW_RULES[(ROW_RULES.indexOf(ruleA)+1)%ROW_RULES.length];
+
+    // Create rows with sanity checks
+    function makeRow(rule){
+      let L, row;
+      let guard = 0;
+      while (guard++ < 50){
+        L = randCell();
+        row = rule.buildRow(L);
+        // avoid trivial R
+        const onesR = countOnes(row.R);
+        if (onesR >= 1 && onesR <= 8) break;
+      }
+      return row;
+    }
+
+    const r1 = makeRow(ruleA);
+    const r2 = makeRow(ruleB);
+
+    // For row3, randomly choose ruleA or ruleB (so it's not always same)
+    const rule3 = Math.random() < 0.5 ? ruleA : ruleB;
+    let L3 = randCell();
+    let row3 = rule3.buildRow(L3);
+
+    // Avoid duplicates: ensure row3 cells aren't identical to earlier ones too often
+    const used = new Set([
+      cellKey(r1.L), cellKey(r1.M), cellKey(r1.R),
+      cellKey(r2.L), cellKey(r2.M), cellKey(r2.R),
+    ]);
+    let guard = 0;
+    while (guard++ < 60){
+      const keys = [cellKey(row3.L), cellKey(row3.M), cellKey(row3.R)];
+      const tooManyDup = keys.some(k => used.has(k));
+      if (!tooManyDup) break;
+      L3 = randCell();
+      row3 = rule3.buildRow(L3);
+    }
+
+    const answer = row3.R;
+
+    // Options
+    const { options, ansIndex } = buildOptions(answer, rule3.name);
+
+    // Debug text
+    const debugText =
+`Row1: ${ruleA.name}
+Row2: ${ruleB.name}
+Row3: ${rule3.name}
+
+※ 右下（?）が正解セルです。
+※ 1セルは 3×3 の白黒マス（SVG描画）。
+`;
+
+    return {
+      grid: [
+        [r1.L, r1.M, r1.R],
+        [r2.L, r2.M, r2.R],
+        [row3.L, row3.M, null]
+      ],
+      answer,
+      options,
+      ansIndex,
+      debugText
+    };
+  }
+
+  // ========= UI =========
+  const $matrix = document.getElementById("matrix");
+  const $opts = document.getElementById("opts");
+  const $msg = document.getElementById("msg");
+  const $debug = document.getElementById("debug");
+  const $pill = document.getElementById("statusPill");
+  const $newBtn = document.getElementById("newBtn");
+  const $showBtn = document.getElementById("showBtn");
+
+  const LABELS = ["A","B","C","D","E","F"];
+
+  let state = {
+    q: null,
+    locked: false,
+    revealed: false,
+  };
+
+  function setMessage(text, kind=""){
+    $msg.classList.remove("ok","ng");
+    if (kind) $msg.classList.add(kind);
+    $msg.textContent = text;
+  }
+
+  function renderMatrix(q){
+    $matrix.innerHTML = "";
+    for (let r=0;r<3;r++){
+      for (let c=0;c<3;c++){
+        const cell = document.createElement("div");
+        cell.className = "cell" + (r===2 && c===2 ? " q" : "");
+        if (r===2 && c===2){
+          // Question mark cell
+          const mark = document.createElement("div");
+          mark.className = "qmark";
+          mark.textContent = "?";
+          cell.appendChild(mark);
+        } else {
+          cell.innerHTML = cellToSVG(q.grid[r][c], 120);
+        }
+        $matrix.appendChild(cell);
+      }
+    }
+  }
+
+  function renderOptions(q){
+    $opts.innerHTML = "";
+    q.options.forEach((optCell, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "opt";
+      btn.type = "button";
+      btn.addEventListener("click", () => onPick(idx));
+
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.textContent = LABELS[idx];
+
+      const thumb = document.createElement("div");
+      thumb.className = "thumb";
+      thumb.innerHTML = cellToSVG(optCell, 64);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      const title = document.createElement("div");
+      title.className = "title";
+      title.textContent = `選択肢 ${LABELS[idx]}`;
+      const desc = document.createElement("div");
+      desc.className = "desc";
+      desc.textContent = "タップして回答";
+
+      meta.appendChild(title);
+      meta.appendChild(desc);
+
+      btn.appendChild(badge);
+      btn.appendChild(thumb);
+      btn.appendChild(meta);
+      $opts.appendChild(btn);
+    });
+  }
+
+  function updatePill(){
+    if (!state.q){
+      $pill.textContent = "未開始";
+      return;
+    }
+    $pill.textContent = state.locked ? "回答済み" : "回答待ち";
+  }
+
+  function onPick(idx){
+    if (!state.q || state.locked) return;
+    state.locked = true;
+    state.revealed = false;
+    updatePill();
+
+    const correct = (idx === state.q.ansIndex);
+    if (correct){
+      setMessage(`正解：${LABELS[idx]} ✅`, "ok");
+    } else {
+      setMessage(`不正解：${LABELS[idx]} ❌（正解はまだ隠しています）`, "ng");
+    }
+  }
+
+  function showAnswer(){
+    if (!state.q) return;
+    state.revealed = true;
+    const ansLabel = LABELS[state.q.ansIndex];
+    setMessage(`正解は ${ansLabel} です。`, "ok");
+
+    // Replace the ? cell with the correct SVG
+    const qCells = Array.from($matrix.querySelectorAll(".cell"));
+    const last = qCells[8];
+    last.innerHTML = cellToSVG(state.q.answer, 120);
+  }
+
+  function newQuestion(){
+    state.q = null;
+    state.locked = false;
+    state.revealed = false;
+
+    // Generate with a few retries to keep variety
+    let q = null;
+    for (let t=0;t<30;t++){
+      q = generateQuestion();
+      // Basic sanity: answer shouldn't be too sparse/dense, and options unique enough
+      const ones = countOnes(q.answer);
+      const uniq = new Set(q.options.map(cellKey)).size;
+      if (ones >= 1 && ones <= 8 && uniq >= 6){
+        break;
+      }
+    }
+
+    state.q = q;
+    renderMatrix(q);
+    renderOptions(q);
+    $debug.textContent = q.debugText;
+    setMessage("右下（?）に入る図形を選んでください。");
+    updatePill();
+  }
+
+  // ========= Bind =========
+  $newBtn.addEventListener("click", newQuestion);
+  $showBtn.addEventListener("click", showAnswer);
+
+  // Start
+  updatePill();
+})();
+</script>
+</body>
+</html>
