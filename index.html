@@ -246,23 +246,22 @@
     <div class="topbar">
       <div>
         <h1>ガチIQ（MVP）</h1>
-        <div class="sub">3×3マトリクス推理を自動生成。まずは「図形＝3×3白黒セル」だけで無限量産できます。</div>
       </div>
       <div class="pill" id="statusPill">出題準備中…</div>
     </div>
 
     <div class="card">
       <div class="matrix" id="matrix"></div>
+      
+      <div class="msg" id="msg">「次の問題」を押してスタート。</div>
 
+      <div class="opts" id="opts"></div>
+      
       <div class="row">
         <button class="btn" id="newBtn">次の問題</button>
         <button class="btn secondary" id="showBtn">正解を表示</button>
       </div>
-
-      <div class="opts" id="opts"></div>
-
-      <div class="msg" id="msg">「次の問題」を押してスタート。</div>
-
+      
       <details>
         <summary>（開発用）今回の生成ルールを見る</summary>
         <div class="small" id="debug"></div>
