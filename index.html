@@ -676,6 +676,51 @@ function generateQuestion(){
     debugText
   };
 }
+
+function generateRelation2x2(){
+  // まずは安定の「90度回転」だけでOK（後で増やせる）
+  const ruleName = "A→B を 90°回転 / C→? も 90°回転";
+
+  function randCellWithDensity(){
+    let c, guard = 0;
+    while (guard++ < 200) {
+      c = randCell();
+      const ones = countOnes(c);
+      if (ones >= 2 && ones <= 5) return c;
+    }
+    return randCell();
+  }
+
+  const A = randCellWithDensity();
+  const B = rot90(A);
+
+  const C = randCellWithDensity();
+  const answer = rot90(C);
+
+  // 2×2の並び： [A B; C ?]
+  const grid = [
+    [A, B],
+    [C, null]
+  ];
+
+  const { options, ansIndex } = buildOptions(answer, ruleName);
+
+  const debugText =
+`Type: relation2x2
+Rule: ${ruleName}
+`;
+
+  return {
+    type: "relation2x2",
+    size: 2,
+    grid,
+    answer,
+    options,
+    ansIndex,
+    debugText
+  };
+}
+
   // ========= UI =========
   const $matrix = document.getElementById("matrix");
   const $opts = document.getElementById("opts");
@@ -700,24 +745,31 @@ function generateQuestion(){
   }
 
   function renderMatrix(q){
-    $matrix.innerHTML = "";
-    for (let r=0;r<3;r++){
-      for (let c=0;c<3;c++){
-        const cell = document.createElement("div");
-        cell.className = "cell" + (r===2 && c===2 ? " q" : "");
-        if (r===2 && c===2){
-          // Question mark cell
-          const mark = document.createElement("div");
-          mark.className = "qmark";
-          mark.textContent = "?";
-          cell.appendChild(mark);
-        } else {
-          cell.innerHTML = cellToSVG(q.grid[r][c], 120);
-        }
-        $matrix.appendChild(cell);
-      }
+  const n = q.size || 3; // 3×3がデフォ、2×2も対応
+  $matrix.innerHTML = "";
+  $matrix.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+
+  const holeIndex = n*n - 1;
+
+  for (let i=0;i<n*n;i++){
+    const cell = document.createElement("div");
+    cell.className = "cell" + (i===holeIndex ? " q" : "");
+
+    if (i===holeIndex){
+      const mark = document.createElement("div");
+      mark.className = "qmark";
+      mark.textContent = "?";
+      cell.appendChild(mark);
+    } else {
+      const r = Math.floor(i/n);
+      const c = i % n;
+      cell.innerHTML = cellToSVG(q.grid[r][c], 120);
     }
+
+    $matrix.appendChild(cell);
   }
+}
+       
 
   function renderOptions(q){
   $opts.innerHTML = "";
@@ -773,9 +825,8 @@ function generateQuestion(){
 
     // Replace the ? cell with the correct SVG
     const qCells = Array.from($matrix.querySelectorAll(".cell"));
-    const last = qCells[8];
-    last.innerHTML = cellToSVG(state.q.answer, 120);
-  }
+const last = qCells[qCells.length - 1];
+last.innerHTML = cellToSVG(state.q.answer, 120);
 
   function newQuestion(){
     state.q = null;
@@ -785,14 +836,16 @@ function generateQuestion(){
     // Generate with a few retries to keep variety
     let q = null;
     for (let t=0;t<30;t++){
-      q = generateQuestion();
-      // Basic sanity: answer shouldn't be too sparse/dense, and options unique enough
-      const ones = countOnes(q.answer);
-      const uniq = new Set(q.options.map(cellKey)).size;
-      if (ones >= 1 && ones <= 8 && uniq >= 6){
-        break;
-      }
-    }
+  // まずは 3×3:2×2 = 7:3 くらいが自然
+  const pick = Math.random();
+  q = (pick < 0.7) ? generateQuestion() : generateRelation2x2();
+
+  const ones = countOnes(q.answer);
+  const uniq = new Set(q.options.map(cellKey)).size;
+  if (ones >= 1 && ones <= 8 && uniq >= 6){
+    break;
+  }
+}
 
     state.q = q;
     renderMatrix(q);
