@@ -127,9 +127,14 @@
 
   .opts{
   display:grid;
-  grid-template-columns: repeat(3, 110px); /* ← 固定幅 */
-  justify-content:center;
-  gap:12px;
+
+  /* 画面幅に合わせて自動調整 */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap:10px;
+  width:100%;
+  max-width:360px;   /* ← これが重要 */
+  margin:0 auto;     /* ← 中央寄せ */
 }
 
 /* 2列に落とさない（このブロックがあれば削除） */
@@ -151,7 +156,7 @@
     align-items:center;
     justify-content:flex-start;
     min-height: 72px;
-    width:110px;
+    width:100px;
   }
   .opt:hover{ background: rgba(255,255,255,.06); }
   .opt:active{ transform: translateY(1px); }
