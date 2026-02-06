@@ -818,15 +818,16 @@ Rule: ${ruleName}
   }
 
   function showAnswer(){
-    if (!state.q) return;
-    state.revealed = true;
-    const ansLabel = LABELS[state.q.ansIndex];
-    setMessage(`正解は ${ansLabel} です。`, "ok");
+  if (!state.q) return;
+  state.revealed = true;
+  const ansLabel = LABELS[state.q.ansIndex];
+  setMessage(`正解は ${ansLabel} です。`, "ok");
 
-    // Replace the ? cell with the correct SVG
-    const qCells = Array.from($matrix.querySelectorAll(".cell"));
-const last = qCells[qCells.length - 1];
-last.innerHTML = cellToSVG(state.q.answer, 120);
+  // Replace the ? cell with the correct SVG
+  const qCells = Array.from($matrix.querySelectorAll(".cell"));
+  const last = qCells[qCells.length - 1];
+  last.innerHTML = cellToSVG(state.q.answer, 120);
+}
 
   function newQuestion(){
     state.q = null;
