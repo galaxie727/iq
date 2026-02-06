@@ -363,35 +363,10 @@
   // Then we mix two different row-rules to create variety.
   const ROW_RULES = [
   {
-    name: "回転(90°) + XOR",
-    buildRow: (L) => {
-      const M = rot90(L);
+    name: "右 = 左 XOR 中央",
+    buildRow: (L, M) => {
       const R = xor(L, M);
-      return {L,M,R};
-    }
-  },
-  {
-    name: "右シフト + XOR",
-    buildRow: (L) => {
-      const M = shiftRight(L);
-      const R = xor(L, M);
-      return {L,M,R};
-    }
-  },
-  {
-    name: "下シフト + XOR",
-    buildRow: (L) => {
-      const M = shiftDown(L);
-      const R = xor(L, M);
-      return {L,M,R};
-    }
-  },
-  {
-    name: "左右反転 + XOR",
-    buildRow: (L) => {
-      const M = flipH(L);
-      const R = xor(L, M);
-      return {L,M,R};
+      return { L, M, R };
     }
   },
 ];
@@ -469,51 +444,119 @@
     const ansIndex = options.findIndex(o => deepEq(o, answer));
     return { options, ansIndex };
   }
+function isRowRuleSatisfied(grid, rule) {
+  // grid[r][c] のうち、? は null を想定（ここでは採点時に正解セルを入れてチェック）
+  for (let r = 0; r < 3; r++) {
+    const L = grid[r][0], M = grid[r][1], R = grid[r][2];
+    const expect = rule.buildRow(L, M).R;
+    if (!deepEq(expect, R)) return false;
+  }
+  return true;
+}
 
+function isColRuleSatisfied(grid, rule) {
+  // 列でも同じ「右=左 XOR 中央」が成立するように見る（上=左・中=中央・下=右）
+  for (let c = 0; c < 3; c++) {
+    const L = grid[0][c], M = grid[1][c], R = grid[2][c];
+    const expect = rule.buildRow(L, M).R;
+    if (!deepEq(expect, R)) return false;
+  }
+  return true;
+}
   // ========= Generate a full 3×3 matrix question =========
 function generateQuestion(){
-  const rule = ROW_RULES[rndInt(0, ROW_RULES.length-1)];
+  const rule = ROW_RULES[0];
 
-  function makeRow(){
-    let L, row, guard = 0;
-    while (guard++ < 80){
-      L = randCell();
-      row = rule.buildRow(L);
-      const onesR = countOnes(row.R);
-      // 黒が多すぎ/少なすぎを避ける
-      if (onesR >= 2 && onesR <= 7) break;
+  // ランダムセルを作る（黒マス数を揃えると"問題っぽさ"が上がる）
+  function randCellWithDensity(){
+    let c, guard = 0;
+    while (guard++ < 200) {
+      c = randCell(); // 既存の randCell() を使用
+      const ones = countOnes(c);
+      if (ones >= 2 && ones <= 5) return c;
     }
-    return row;
+    return randCell();
   }
 
-  const r1 = makeRow();
-  const r2 = makeRow();
+  // まず「列ルール」を先に成立させると、見た目が安定する
+  // col1 と col2 を作って、col3 = XOR で決める
+  function makeSolvedGrid(){
+    // 1列目（上・中を決めて下をXORで決める）
+    const a11 = randCellWithDensity();
+    const a21 = randCellWithDensity();
+    const a31 = xor(a11, a21);
 
-  // 3行目はRを隠す
-  let L3 = randCell();
-  let r3 = rule.buildRow(L3);
+    // 2列目
+    const a12 = randCellWithDensity();
+    const a22 = randCellWithDensity();
+    const a32 = xor(a12, a22);
 
-  const answer = r3.R;
+    // 3列目は「行でも成立」させるため、行側のXORも一致する必要がある
+    // なので (1行目) a13 = a11 XOR a12
+    //      (2行目) a23 = a21 XOR a22
+    //      (3行目) a33 = a31 XOR a32
+    const a13 = xor(a11, a12);
+    const a23 = xor(a21, a22);
+    const a33 = xor(a31, a32);
+
+    const grid = [
+      [a11, a12, a13],
+      [a21, a22, a23],
+      [a31, a32, a33],
+    ];
+    return grid;
+  }
+
+  // 破綻チェック＋見た目チェックを通るまで作り直し
+  let grid = null;
+  for (let t=0; t<300; t++){
+    const g = makeSolvedGrid();
+
+    // 密度・被り・極端さを避ける
+    const all = g.flat();
+    const onesList = all.map(countOnes);
+    const tooExtreme = onesList.some(x => x <= 1 || x >= 8);
+    const uniq = new Set(all.map(cellKey)).size;
+
+    if (tooExtreme) continue;
+    if (uniq < 7) continue; // 被り過ぎると"ランダム感"が出る
+
+    // 行・列の両方でルール成立チェック
+    if (!isRowRuleSatisfied(g, rule)) continue;
+    if (!isColRuleSatisfied(g, rule)) continue;
+
+    grid = g;
+    break;
+  }
+
+  if (!grid) {
+    // 最悪の保険（ここに来たら条件が厳しすぎ）
+    grid = makeSolvedGrid();
+  }
+
+  // 右下を隠す
+  const answer = grid[2][2];
+  const gridWithHole = [
+    [grid[0][0], grid[0][1], grid[0][2]],
+    [grid[1][0], grid[1][1], grid[1][2]],
+    [grid[2][0], grid[2][1], null],
+  ];
+
   const { options, ansIndex } = buildOptions(answer, rule.name);
 
   const debugText =
-`Rule(ALL rows): ${rule.name}
-※ 全行同一ルールで生成（メンサ風に見えやすい）
+`Rule: ${rule.name}
+✅ 行でも列でも成立する問題だけ採用（意味が分かるやつ）
 `;
 
   return {
-    grid: [
-      [r1.L, r1.M, r1.R],
-      [r2.L, r2.M, r2.R],
-      [r3.L, r3.M, null]
-    ],
+    grid: gridWithHole,
     answer,
     options,
     ansIndex,
     debugText
   };
 }
-
   // ========= UI =========
   const $matrix = document.getElementById("matrix");
   const $opts = document.getElementById("opts");
