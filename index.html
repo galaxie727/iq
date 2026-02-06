@@ -606,34 +606,28 @@ function generateQuestion(){
   }
 
   function renderOptions(q){
-    $opts.innerHTML = "";
-    q.options.forEach((optCell, idx) => {
-      const btn = document.createElement("button");
-      btn.className = "opt";
-      btn.type = "button";
-      btn.addEventListener("click", () => onPick(idx));
+  $opts.innerHTML = "";
+  q.options.forEach((optCell, idx) => {
 
-      const badge = document.createElement("div");
-      badge.className = "badge";
-      badge.textContent = LABELS[idx];
+    const btn = document.createElement("button");
+    btn.className = "opt";
+    btn.type = "button";
+    btn.addEventListener("click", () => onPick(idx));
 
-      const thumb = document.createElement("div");
-      thumb.className = "thumb";
-      thumb.innerHTML = cellToSVG(optCell, 64);
+    const badge = document.createElement("div");
+    badge.className = "badge";
+    badge.textContent = LABELS[idx];
 
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      const title = document.createElement("div");
-      title.className = "title";
-      title.textContent = `選択肢 ${LABELS[idx]}`;
-      meta.appendChild(title);
+    const thumb = document.createElement("div");
+    thumb.className = "thumb";
+    thumb.innerHTML = cellToSVG(optCell, 64);
 
-      btn.appendChild(badge);
-      btn.appendChild(thumb);
-      btn.appendChild(meta);
-      $opts.appendChild(btn);
-    });
-  }
+    btn.appendChild(badge);
+    btn.appendChild(thumb);
+
+    $opts.appendChild(btn);
+  });
+}
 
   function updatePill(){
     if (!state.q){
