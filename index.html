@@ -126,33 +126,38 @@
   }
 
   .opts{
-    margin-top: 14px;
-    display:grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-  }
-  @media (max-width:520px){
-    .opts{ grid-template-columns: repeat(2, 1fr); }
-  }
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: repeat(3, 1fr); /* 常に3列 */
+  gap: 8px;
+}
+
+/* 2列に落とさない（このブロックがあれば削除） */
+/*
+@media (max-width:520px){
+  .opts{ grid-template-columns: repeat(2, 1fr); }
+}
+*/
+  
   .opt{
     border:1px solid var(--line);
     background: rgba(255,255,255,.03);
     border-radius: 14px;
-    padding: 10px;
+    padding: 8px;
     cursor:pointer;
     transition: transform .06s ease;
     display:flex;
-    gap:10px;
+    gap:8px;
     align-items:center;
     justify-content:flex-start;
-    min-height: 86px;
+    min-height: 72px;
   }
   .opt:hover{ background: rgba(255,255,255,.06); }
   .opt:active{ transform: translateY(1px); }
   .badge{
-    width: 28px;
-    height: 28px;
-    border-radius: 10px;
+    width: 26px;
+    height: 26px;
+    border-radius: 9px;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -163,8 +168,8 @@
     flex: 0 0 auto;
   }
   .thumb{
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
     border-radius: 12px;
     overflow:hidden;
     border:1px solid var(--line);
@@ -181,7 +186,7 @@
     min-width: 0;
   }
   .meta .title{
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing:.02em;
     color: var(--text);
@@ -621,12 +626,7 @@ function generateQuestion(){
       const title = document.createElement("div");
       title.className = "title";
       title.textContent = `選択肢 ${LABELS[idx]}`;
-      const desc = document.createElement("div");
-      desc.className = "desc";
-      desc.textContent = "タップして回答";
-
       meta.appendChild(title);
-      meta.appendChild(desc);
 
       btn.appendChild(badge);
       btn.appendChild(thumb);
